@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Профиль — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Личный кабинет</h2>
+
+<div class="card" style="max-width: 520px;">
+    <b>ФИО:</b> {{ user.full_name }}<br>
+    <b>E-mail:</b> {{ user.email }}<br>
+    <b>Роль:</b>
+    {% if user.role == 'author' %}Автор{% elif user.role == 'staff' %}Редактор{% elif user.role == 'reviewer' %}Рецензент{% elif user.role == 'admin' %}Администратор{% endif %}
+    <br>
+    <b>Дата регистрации:</b> {{ user.registered_at.strftime('%d.%m.%Y') if user.registered_at else '' }}
+</div>
+
+{% if user.role == 'author' %}
+    <hr>
+    <h3>Мои рукописи</h3>
+    {% if manuscripts %}
+        <table class="table-striped">
+            <tr>
+                <th>Название</th>
+                <th>Статус</th>
+                <th>Дата подачи</th>
+                <th>Файл</th>
+            </tr>
+            {% for m in manuscripts %}
+            <tr>
+                <td>{{ m.title }}</td>
+                <td>
+                    <span class="manuscript-status status-{{ m.status }}">{{ m.status|replace('_', ' ')|capitalize }}</span>
+                </td>
+                <td>{{ m.created_at.strftime('%d.%m.%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}" target="_blank">Скачать</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>У вас пока нет поданных рукописей.</p>
+    {% endif %}
+{% endif %}
+
+{% if user.role == 'reviewer' %}
+    <hr>
+    <h3>Назначенные рецензии</h3>
+    {% if reviews %}
+        <table class="table-striped">
+            <tr>
+                <th>Рукопись</th>
+                <th>Оценка</th>
+                <th>Статус</th>
+                <th>Дата</th>
+                <th>Действие</th>
+            </tr>
+            {% for r in reviews %}
+            <tr>
+                <td>{{ r.manuscript.title }}</td>
+                <td>{% if r.score %}{{ r.score }}{% else %}-{% endif %}</td>
+                <td><span class="manuscript-status status-{{ r.status }}">{{ r.status|replace('_', ' ')|capitalize }}</span></td>
+                <td>{{ r.created_at.strftime('%d.%m.%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('routes.review_form', manuscript_id=r.manuscript_id) }}" class="btn btn-outline">Редактировать</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Пока нет назначенных рецензий.</p>
+    {% endif %}
+{% endif %}
+
+{% if user.role == 'staff' %}
+    <hr>
+    <p>Вы — сотрудник редакции. Перейдите к <a href="{{ url_for('routes.manuscript_list') }}">списку рукописей</a> для работы с материалами.</p>
+{% endif %}
+
+{# Для администратора убираем ненужный блок или оставляем текст #}
+{% if user.role == 'admin' %}
+    <hr>
+    <p>Вы — администратор. Для работы используйте раздел <b>“Админка”</b> в верхнем меню.</p>
+{% endif %}
+
+{% endblock %}

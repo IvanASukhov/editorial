@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Пользователи — Админка{% endblock %}
+
+{% block content %}
+<h2>Пользователи</h2>
+
+<form method="get" action="{{ url_for('routes.admin_users') }}" style="margin-bottom: 20px;">
+    <input type="text" name="q" value="{{ request.args.q or '' }}" placeholder="Поиск по ФИО или email" style="width: 240px;">
+    <select name="role" style="margin-left: 10px;">
+        <option value="">Все роли</option>
+        <option value="author" {% if request.args.role == 'author' %}selected{% endif %}>Автор</option>
+        <option value="staff" {% if request.args.role == 'staff' %}selected{% endif %}>Редактор</option>
+        <option value="reviewer" {% if request.args.role == 'reviewer' %}selected{% endif %}>Рецензент</option>
+        <option value="admin" {% if request.args.role == 'admin' %}selected{% endif %}>Администратор</option>
+    </select>
+    <button type="submit" class="btn btn-outline" style="margin-left: 10px;">Поиск</button>
+</form>
+
+{% if users %}
+    <table class="table-striped">
+        <tr>
+            <th>ФИО</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th>Дата регистрации</th>
+            <th>Статус</th>
+            <th>Действие</th>
+        </tr>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.full_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+                {% if u.role == 'author' %}Автор
+                {% elif u.role == 'staff' %}Редактор
+                {% elif u.role == 'reviewer' %}Рецензент
+                {% elif u.role == 'admin' %}Администратор
+                {% else %}{{ u.role }}{% endif %}
+            </td>
+            <td>{{ u.registered_at.strftime('%d.%m.%Y') if u.registered_at else '' }}</td>
+            <td>
+                {% if u.is_blocked %}
+                    <span style="color: #ba2b2b;">Заблокирован</span>
+                {% else %}
+                    <span style="color: #2e802e;">Активен</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('routes.admin_user_edit', user_id=u.id) }}" class="btn btn-outline">Подробнее</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Пользователей не найдено.</p>
+{% endif %}
+{% endblock %}

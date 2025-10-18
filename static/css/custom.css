@@ -1,0 +1,98 @@
+/* custom.css — кастомные стили для отдельных компонентов и страниц */
+
+/* Специальное оформление панели администратора */
+.admin-panel {
+    background: #e9f2fb;
+    border: 2px solid #243e5c;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 10px #243e5c22;
+}
+
+.admin-panel h2 {
+    color: #175b8d;
+}
+
+.user-role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.97em;
+    border-radius: 5px;
+    background: #eaf4fa;
+    color: #21669a;
+    border: 1px solid #64b5f6;
+    margin-left: 8px;
+}
+
+/* Выделение рукописей по статусу */
+.status-submitted    { color: #427eaa; background: #f0f6fd; border-left: 4px solid #47a3f3; }
+.status-under_review { color: #9a6e1d; background: #fffbe5; border-left: 4px solid #ffe066; }
+.status-accepted     { color: #1c7c2c; background: #e7faea; border-left: 4px solid #36c572; }
+.status-rejected     { color: #a02020; background: #fae7e7; border-left: 4px solid #e14c4c; }
+.status-published    { color: #663399; background: #f7f3fd; border-left: 4px solid #ad79e4; }
+
+.manuscript-status {
+    padding: 4px 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+.card {
+    background: #f6fafe;
+    border-radius: 8px;
+    box-shadow: 0 1px 8px #243e5c19;
+    padding: 20px 18px;
+    margin-bottom: 16px;
+}
+
+.btn-outline {
+    background: #fff;
+    color: #243e5c;
+    border: 1.5px solid #243e5c;
+    border-radius: 5px;
+    padding: 9px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-outline:hover {
+    background: #243e5c;
+    color: #fff;
+}
+
+.hide {
+    display: none !important;
+}
+
+/* Мелкие доработки */
+.table-striped tbody tr:nth-child(odd) {
+    background: #f4f9fb;
+}
+.table-striped tbody tr:nth-child(even) {
+    background: #fff;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    background: #243e5c;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+input[type="file"]:hover::-webkit-file-upload-button {
+    background: #175b8d;
+}
+
+/* Уведомления пользователя */
+.notification {
+    background: #64b5f6;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 1em;
+    margin-bottom: 18px;
+}

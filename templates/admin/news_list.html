@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Новости — Админка{% endblock %}
+
+{% block content %}
+<h2>Новости</h2>
+
+<p style="margin-bottom: 18px;">
+    <a href="{{ url_for('routes.admin_news_edit') }}" class="btn">Добавить новость</a>
+</p>
+
+{% if news_list %}
+    <table class="table-striped">
+        <tr>
+            <th>Заголовок</th>
+            <th>Дата публикации</th>
+            <th>Текст</th>
+            <th>Действия</th>
+        </tr>
+        {% for n in news_list %}
+        <tr>
+            <td>{{ n.title }}</td>
+            <td>{{ n.published_at.strftime('%d.%m.%Y') if n.published_at else '' }}</td>
+            <td style="max-width:270px;">{{ n.content|truncate(120, True, '...') }}</td>
+            <td>
+                <a href="{{ url_for('routes.admin_news_edit', news_id=n.id) }}" class="btn btn-outline">Редактировать</a>
+                <form method="post" action="{{ url_for('routes.admin_news') }}" style="display:inline;">
+                    <input type="hidden" name="news_id" value="{{ n.id }}">
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-outline" onclick="return confirm('Удалить новость?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Новостей пока нет.</p>
+{% endif %}
+{% endblock %}

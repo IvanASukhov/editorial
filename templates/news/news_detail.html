@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Новости — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>{{ item.title }}</h2>
+<p style="color: #888; margin-bottom: 20px;">Опубликовано: {{ item.published_at.strftime('%d.%m.%Y') }}</p>
+
+<div class="card" style="max-width: 750px;">
+    {{ item.content | safe }}
+</div>
+
+<p style="margin-top:30px;">
+    <a href="{{ url_for('routes.news') }}" class="btn btn-outline">&larr; Все новости</a>
+</p>
+{% endblock %}

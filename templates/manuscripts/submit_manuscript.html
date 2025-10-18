@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Подать рукопись — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Подача рукописи</h2>
+
+<form method="post" enctype="multipart/form-data" action="{{ url_for('routes.submit_manuscript') }}" style="max-width: 500px;">
+    <label for="title">Название рукописи<span style="color: red;">*</span>:</label>
+    <input type="text" name="title" id="title" required maxlength="256">
+
+    <label for="description">Аннотация:</label>
+    <textarea name="description" id="description" rows="5" maxlength="2000"></textarea>
+
+    <label for="file">Файл рукописи<span style="color: red;">*</span>:</label>
+    <input type="file" name="file" id="file" accept=".pdf,.doc,.docx,.rtf,.txt" required>
+
+    <input type="submit" class="btn" value="Отправить">
+</form>
+
+<p style="margin-top:20px;">
+    После отправки рукопись поступит на рассмотрение редакции. Отслеживать статус можно в разделе <a href="{{ url_for('routes.manuscript_status') }}">Мои рукописи</a>.
+</p>
+{% endblock %}

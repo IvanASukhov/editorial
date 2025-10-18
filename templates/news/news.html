@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Новости — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2em;">
+  <h2 style="font-size:2em; color:#22577A; font-weight:700; margin-bottom: 0.6em;">Новости</h2>
+</div>
+
+<div style="background:#f6fafd; border-radius:12px; box-shadow:0 2px 12px rgba(34,87,122,0.07); padding:2em 2em 1.2em 2em;">
+  {% if news %}
+      <ul style="list-style: disc inside; padding-left: 1em;">
+      {% for item in news %}
+          <li style="margin-bottom:1.5em; line-height:1.6;">
+              <a href="{{ url_for('routes.news_detail', news_id=item.id) }}" style="font-weight:600; color:#22577A; text-decoration:underline;">
+                {{ item.title }}
+              </a>
+              <span style="color: #888; font-size: 0.97em;">({{ item.published_at.strftime('%d.%m.%Y') }})</span>
+              <br>
+              <span style="color:#333;">{{ item.content[:200] }}{% if item.content|length > 200 %}...{% endif %}</span>
+          </li>
+      {% endfor %}
+      </ul>
+  {% else %}
+      <p>Пока нет новостей.</p>
+  {% endif %}
+</div>
+{% endblock %}

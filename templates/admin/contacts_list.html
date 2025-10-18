@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Обращения — Админка{% endblock %}
+
+{% block content %}
+<h2>Обращения пользователей</h2>
+
+{% if contacts %}
+    <table class="table-striped">
+        <tr>
+            <th>Дата</th>
+            <th>Пользователь</th>
+            <th>Email</th>
+            <th>Тема обращения</th>
+            <th>Сообщение</th>
+            <th>Статус</th>
+            <th>Действие</th>
+        </tr>
+        {% for c in contacts %}
+        <tr>
+            <td>{{ c.sent_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>
+                {% if c.sender %}
+                    {{ c.sender.full_name }}
+                {% else %}
+                    Гость сайта
+                {% endif %}
+            </td>
+            <td>
+                {% if c.sender %}
+                    {{ c.sender.email }}
+                {% else %}
+                    {{ c.sender_email or '—' }}
+                {% endif %}
+            </td>
+            <td>{{ c.subject }}</td>
+            <td style="max-width:260px; white-space:pre-line;">{{ c.body }}</td>
+            <td>
+                {% if c.status == 'new' %}
+                    <span style="color:#ba4b19;">Не обработано</span>
+                {% elif c.status == 'done' %}
+                    <span style="color:#1c7c2c;">Обработано</span>
+                {% else %}
+                    {{ c.status }}
+                {% endif %}
+            </td>
+            <td>
+                {% if c.status != 'done' %}
+                <form method="post" action="{{ url_for('routes.admin_contacts') }}" style="display:inline;">
+                    <input type="hidden" name="contact_id" value="{{ c.id }}">
+                    <input type="hidden" name="action" value="mark_done">
+                    <button type="submit" class="btn btn-outline" onclick="return confirm('Отметить обращение как обработанное?')">Отметить как обработано</button>
+                </form>
+                {% else %}
+                    <span style="color:#888;">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Обращений пока нет.</p>
+{% endif %}
+{% endblock %}

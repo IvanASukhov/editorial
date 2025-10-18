@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Контакты — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+
+<h2>Связаться с редакцией</h2>
+
+<p>
+    Если у вас есть вопросы по подаче рукописей, публикациям или работе сайта, используйте форму ниже или пишите напрямую на нашу почту.
+</p>
+
+<div class="card" style="max-width: 520px;">
+    <p><b>Адрес редакции:</b><br>
+        109316, г. Москва, ул. Вольгоградский проспект, д. 43, корп. 3, офис 107<br>
+        <b>Телефон:</b> +7 (495) 987‑65‑43<br>
+        <b>Email:</b> editorial@muv.ru
+    </p>
+</div>
+
+<hr>
+
+{% if user %}
+    <h3>Форма обратной связи</h3>
+    <form method="post" action="{{ url_for('routes.contact') }}">
+        <label for="subject">Тема обращения<span style="color: red;">*</span>:</label>
+        <input type="text" name="subject" id="subject" maxlength="256" required>
+
+        <label for="body">Сообщение<span style="color: red;">*</span>:</label>
+        <textarea name="body" id="body" rows="6" maxlength="2000" required></textarea>
+
+        <input type="submit" class="btn" value="Отправить">
+    </form>
+{% else %}
+    <div class="alert alert-info" style="max-width: 450px;">
+        Для отправки сообщения авторизуйтесь на сайте.
+        <br>
+        <a href="{{ url_for('routes.login') }}" class="btn btn-outline" style="margin-top: 10px;">Войти</a>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Публикации — Админка{% endblock %}
+
+{% block content %}
+<h2>Публикации</h2>
+
+<p style="margin-bottom: 18px;">
+    <a href="{{ url_for('routes.admin_publications_edit') }}" class="btn">Добавить публикацию</a>
+</p>
+
+{% if publications %}
+    <table class="table-striped">
+        <tr>
+            <th>Название</th>
+            <th>Тип</th>
+            <th>Дата выпуска</th>
+            <th>Описание</th>
+            <th>Действия</th>
+        </tr>
+        {% for pub in publications %}
+        <tr>
+            <td>{{ pub.title }}</td>
+            <td>
+                {% if pub.type == 'journal' %}
+                    Журнал
+                {% elif pub.type == 'book' %}
+                    Книга/Сборник
+                {% else %}
+                    {{ pub.type }}
+                {% endif %}
+            </td>
+            <td>{{ pub.pub_date.strftime('%d.%m.%Y') if pub.pub_date else '' }}</td>
+            <td style="max-width:240px;">{{ pub.description|truncate(100, True, '...') }}</td>
+            <td>
+                <a href="{{ url_for('routes.admin_publications_edit', pub_id=pub.id) }}" class="btn btn-outline">Редактировать</a>
+                <form method="post" action="{{ url_for('routes.admin_publications') }}" style="display:inline;">
+                    <input type="hidden" name="pub_id" value="{{ pub.id }}">
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-outline" onclick="return confirm('Удалить публикацию?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Публикаций пока нет.</p>
+{% endif %}
+{% endblock %}

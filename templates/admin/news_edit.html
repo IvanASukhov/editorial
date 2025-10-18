@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if news %}Редактировать новость{% else %}Добавить новость{% endif %} — Админка
+{% endblock %}
+
+{% block content %}
+<h2>
+    {% if news %}Редактировать новость{% else %}Добавить новость{% endif %}
+</h2>
+
+<form method="post" action="">
+    <label for="title">Заголовок<span style="color:red">*</span>:</label>
+    <input type="text" name="title" id="title" maxlength="256" required value="{{ news.title if news else '' }}">
+
+    <label for="content">Текст новости<span style="color:red">*</span>:</label>
+    <textarea name="content" id="content" rows="7" maxlength="5000" required>{{ news.content if news else '' }}</textarea>
+
+    <input type="submit" class="btn" value="{% if news %}Сохранить изменения{% else %}Опубликовать новость{% endif %}">
+    <a href="{{ url_for('routes.admin_news') }}" class="btn btn-outline" style="margin-left: 16px;">Назад к списку</a>
+</form>
+{% endblock %}

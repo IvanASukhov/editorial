@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Вход — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Вход в личный кабинет</h2>
+
+<form method="post" action="{{ url_for('routes.login') }}" style="max-width: 380px;">
+    <label for="email">E-mail<span style="color: red;">*</span>:</label>
+    <input type="email" name="email" id="email" required maxlength="128" autofocus>
+
+    <label for="password">Пароль<span style="color: red;">*</span>:</label>
+    <input type="password" name="password" id="password" required minlength="6">
+
+    <input type="submit" class="btn" value="Войти">
+</form>
+
+<p style="margin-top:20px;">Нет аккаунта? <a href="{{ url_for('routes.register') }}">Зарегистрируйтесь</a></p>
+{% endblock %}

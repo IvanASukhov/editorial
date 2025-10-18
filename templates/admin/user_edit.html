@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Пользователь: {{ user.full_name }} — Админка{% endblock %}
+
+{% block content %}
+<h2>Пользователь: {{ user.full_name }}</h2>
+
+<div class="card" style="max-width: 450px;">
+    <b>Email:</b> {{ user.email }}<br>
+    <b>Роль:</b>
+    <form method="post" style="display:inline;">
+        <select name="role">
+            <option value="author" {% if user.role == 'author' %}selected{% endif %}>Автор</option>
+            <option value="staff" {% if user.role == 'staff' %}selected{% endif %}>Редактор</option>
+            <option value="reviewer" {% if user.role == 'reviewer' %}selected{% endif %}>Рецензент</option>
+            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Администратор</option>
+        </select>
+        <button type="submit" name="action" value="change_role" class="btn btn-outline" style="margin-left:7px;">Сменить роль</button>
+    </form>
+    <br>
+    <b>Дата регистрации:</b> {{ user.registered_at.strftime('%d.%m.%Y') if user.registered_at else '' }}<br>
+    <b>Статус:</b>
+    {% if user.is_blocked %}
+        <span style="color: #ba2b2b;">Заблокирован</span>
+    {% else %}
+        <span style="color: #2e802e;">Активен</span>
+    {% endif %}
+    <br>
+    <form method="post" style="margin-top:10px;">
+        {% if user.is_blocked %}
+            <button type="submit" name="action" value="unblock" class="btn">Разблокировать</button>
+        {% else %}
+            <button type="submit" name="action" value="block" class="btn btn-outline" onclick="return confirm('Заблокировать пользователя?')">Заблокировать</button>
+        {% endif %}
+    </form>
+</div>
+
+<p style="margin-top: 26px;">
+    <a href="{{ url_for('routes.admin_users') }}" class="btn btn-outline">&larr; К списку пользователей</a>
+</p>
+{% endblock %}

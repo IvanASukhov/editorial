@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Публикации — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Публикации</h2>
+
+{% if publications %}
+    <ul>
+    {% for pub in publications %}
+        <li style="margin-bottom: 18px;">
+            <a href="{{ url_for('routes.publication_detail', pub_id=pub.id) }}">
+                <b>{{ pub.title }}</b>
+            </a>
+            <span style="color: #888; font-size: 0.97em;">
+                {% if pub.type == 'journal' %}
+                    (Журнал)
+                {% elif pub.type == 'book' %}
+                    (Книга/Сборник)
+                {% else %}
+                    (Издание)
+                {% endif %}
+                {% if pub.pub_date %} — {{ pub.pub_date.strftime('%d.%m.%Y') }}{% endif %}
+            </span>
+            <br>
+            <span>{{ pub.description[:180] }}{% if pub.description and pub.description|length > 180 %}...{% endif %}</span>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>Пока нет публикаций.</p>
+{% endif %}
+
+{% endblock %}

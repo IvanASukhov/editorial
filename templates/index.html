@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Главная — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 2em;">
+  <h2 style="font-size:2em; color:#22577A; font-weight:700; margin-bottom: 0.5em;">Добро пожаловать!</h2>
+  <p style="font-size:1.1em;">
+    Редакционно-издательский отдел Московского университета имени С.Ю. Витте осуществляет приём, экспертизу и публикацию научных и учебных материалов студентов, преподавателей и сотрудников университета.  
+    <br>
+    Используйте сайт для подачи рукописей, отслеживания статуса рассмотрения, получения рецензий и публикаций, а также для знакомства с нашими новостями и изданиями.
+  </p>
+</div>
+
+<div style="background:#f6fafd; border-radius:12px; box-shadow:0 2px 12px rgba(34,87,122,0.07); padding:2em 2em 1.2em 2em; margin-bottom:2em;">
+  <h3 style="color:#22577A; margin-top:0;">Последние новости</h3>
+  {% if news %}
+      <ul style="list-style: disc inside; padding-left: 1em;">
+      {% for item in news[:3] %}
+          <li style="margin-bottom:1em; line-height:1.6;">
+              <a href="{{ url_for('routes.news_detail', news_id=item.id) }}" style="font-weight:600; color:#22577A; text-decoration:underline;">{{ item.title }}</a>
+              <span style="color: #888; font-size: 0.95em;">({{ item.published_at.strftime('%d.%m.%Y') }})</span>
+              <br>
+              <span style="color:#333;">{{ item.content|truncate(160, True, '...') }}</span>
+          </li>
+      {% endfor %}
+      </ul>
+      <a href="{{ url_for('routes.news') }}" style="
+          display:inline-block; padding:8px 22px; border-radius:6px; 
+          background-color:#22577A; color:#fff; text-decoration:none; 
+          font-weight:600; margin-top:8px; font-size:1em; transition:.2s;">
+          Все новости
+      </a>
+  {% else %}
+      <p>Пока нет новостей.</p>
+  {% endif %}
+</div>
+
+<div style="background:#f6fafd; border-radius:12px; box-shadow:0 2px 12px rgba(34,87,122,0.07); padding:2em 2em 1.2em 2em;">
+  <h3 style="color:#22577A; margin-top:0;">Свежие публикации</h3>
+  {% if publications %}
+      <ul style="list-style: disc inside; padding-left: 1em;">
+      {% for pub in publications[:3] %}
+          <li style="margin-bottom:1em; line-height:1.6;">
+              <a href="{{ url_for('routes.publication_detail', pub_id=pub.id) }}" style="font-weight:600; color:#22577A; text-decoration:underline;">{{ pub.title }}</a>
+              <span style="color: #888; font-size: 0.95em;">({{ pub.pub_date.strftime('%d.%m.%Y') if pub.pub_date else 'дата не указана' }})</span>
+              <br>
+              <span style="color:#333;">{{ pub.description|default('')|truncate(180, True, '...') }}</span>
+          </li>
+      {% endfor %}
+      </ul>
+      <a href="{{ url_for('routes.publications') }}" style="
+          display:inline-block; padding:8px 22px; border-radius:6px; 
+          background-color:#22577A; color:#fff; text-decoration:none; 
+          font-weight:600; margin-top:8px; font-size:1em; transition:.2s;">
+          Все публикации
+      </a>
+  {% else %}
+      <p>Пока нет публикаций.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

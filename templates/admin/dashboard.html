@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Админ-панель — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Административная панель</h2>
+
+<div class="admin-dashboard-tiles">
+    <a href="{{ url_for('routes.admin_news') }}" class="admin-tile">
+        <div class="tile-count">{{ stats.news_total or 0 }}</div>
+        <div class="tile-title">Новости</div>
+    </a>
+    <a href="{{ url_for('routes.admin_publications') }}" class="admin-tile">
+        <div class="tile-count">{{ stats.publications_total or 0 }}</div>
+        <div class="tile-title">Публикации</div>
+    </a>
+    <a href="{{ url_for('routes.admin_users') }}" class="admin-tile">
+        <div class="tile-count">{{ stats.users_total or 0 }}</div>
+        <div class="tile-title">Пользователи</div>
+    </a>
+    <a href="{{ url_for('routes.admin_contacts') }}" class="admin-tile">
+        <div class="tile-count">{{ stats.contacts_new or 0 }}</div>
+        <div class="tile-title">Новые обращения</div>
+    </a>
+    <a href="{{ url_for('routes.admin_reports') }}" class="admin-tile admin-tile-secondary">
+        <div class="tile-title" style="font-size:1.13em;">Отчёты и аналитика</div>
+    </a>
+</div>
+
+<hr style="margin: 36px 0 20px 0;">
+
+<div class="dashboard-columns">
+    <div class="dashboard-block">
+        <h3>Последние обращения</h3>
+        {% if contacts %}
+            <ul>
+            {% for c in contacts[:5] %}
+                <li>
+                    <b>{{ c.subject|truncate(28, True, '...') }}</b>
+                    <span style="color:#888;">({{ c.sent_at.strftime('%d.%m.%Y %H:%M') }})</span>
+                    <br>
+                    <span style="color:#444;">{{ c.body|truncate(55, True, '...') }}</span>
+                    <br>
+                    <a href="{{ url_for('routes.admin_contacts') }}">Все обращения &rarr;</a>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>Нет новых обращений.</p>
+        {% endif %}
+    </div>
+    <div class="dashboard-block">
+        <h3>Последние публикации</h3>
+        {% if publications %}
+            <ul>
+            {% for pub in publications[:5] %}
+                <li>
+                    <b>{{ pub.title|truncate(35, True, '...') }}</b>
+                    <span style="color:#888;">({{ pub.pub_date.strftime('%d.%m.%Y') if pub.pub_date else '' }})</span>
+                    <br>
+                    <span>{{ pub.description|truncate(48, True, '...') }}</span>
+                    <br>
+                    <a href="{{ url_for('routes.admin_publications') }}">Все публикации &rarr;</a>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>Нет публикаций.</p>
+        {% endif %}
+    </div>
+    <div class="dashboard-block">
+        <h3>Последние новости</h3>
+        {% if news %}
+            <ul>
+            {% for n in news[:5] %}
+                <li>
+                    <b>{{ n.title|truncate(35, True, '...') }}</b>
+                    <span style="color:#888;">({{ n.published_at.strftime('%d.%m.%Y') if n.published_at else '' }})</span>
+                    <br>
+                    <span>{{ n.content|truncate(48, True, '...') }}</span>
+                    <br>
+                    <a href="{{ url_for('routes.admin_news') }}">Все новости &rarr;</a>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>Нет новостей.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.admin-dashboard-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 22px;
+    margin-bottom: 40px;
+}
+.admin-tile {
+    background: #f7faff;
+    border: 1.5px solid #cddcf3;
+    border-radius: 8px;
+    padding: 20px 30px 18px 30px;
+    min-width: 168px;
+    text-align: center;
+    text-decoration: none !important;
+    color: #233860;
+    transition: box-shadow 0.18s;
+    box-shadow: 0 1px 7px rgba(60,120,180,0.05);
+}
+.admin-tile:hover {
+    background: #e3eefc;
+    box-shadow: 0 1px 12px rgba(60,120,180,0.13);
+}
+.admin-tile .tile-count {
+    font-size: 2.5em;
+    font-weight: 600;
+    color: #3d68ac;
+    margin-bottom: 5px;
+}
+.admin-tile .tile-title {
+    font-size: 1.13em;
+    font-weight: 400;
+    color: #3c587c;
+}
+.admin-tile-secondary {
+    background: #f2f2f2;
+    border-color: #e7e7e7;
+    color: #646464;
+}
+.dashboard-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 32px;
+    margin-bottom: 30px;
+}
+.dashboard-block {
+    flex: 1 1 340px;
+    min-width: 300px;
+    background: #f9fafb;
+    border: 1.3px solid #e7e7e7;
+    border-radius: 6px;
+    padding: 18px 22px 14px 22px;
+}
+.dashboard-block h3 {
+    font-size: 1.05em;
+    margin-top: 0;
+    margin-bottom: 14px;
+    color: #4360a0;
+}
+.dashboard-block ul {
+    margin-left: 0;
+    padding-left: 18px;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if publication %}Редактировать публикацию{% else %}Добавить публикацию{% endif %} — Админка
+{% endblock %}
+
+{% block content %}
+<h2>
+    {% if publication %}Редактировать публикацию{% else %}Добавить публикацию{% endif %}
+</h2>
+
+<form method="post" action="">
+    <label for="title">Название<span style="color:red">*</span>:</label>
+    <input type="text" name="title" id="title" maxlength="256" required value="{{ publication.title if publication else '' }}">
+
+    <label for="type">Тип публикации<span style="color:red">*</span>:</label>
+    <select name="type" id="type" required>
+        <option value="journal" {% if publication and publication.type == 'journal' %}selected{% endif %}>Журнал</option>
+        <option value="book" {% if publication and publication.type == 'book' %}selected{% endif %}>Книга/Сборник</option>
+    </select>
+
+    <label for="pub_date">Дата выпуска:</label>
+    <input type="date" name="pub_date" id="pub_date"
+        {% if publication and publication.pub_date %}
+            value="{{ publication.pub_date.strftime('%Y-%m-%d') }}"
+        {% endif %}>
+
+    <label for="description">Описание:</label>
+    <textarea name="description" id="description" rows="5" maxlength="2000">{{ publication.description if publication else '' }}</textarea>
+
+    <input type="submit" class="btn" value="{% if publication %}Сохранить изменения{% else %}Добавить публикацию{% endif %}">
+    <a href="{{ url_for('routes.admin_publications') }}" class="btn btn-outline" style="margin-left: 16px;">Назад к списку</a>
+</form>
+{% endblock %}

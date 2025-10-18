@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Регистрация пользователя</h2>
+
+<form method="post" action="{{ url_for('routes.register') }}" style="max-width: 400px;">
+    <label for="full_name">ФИО<span style="color: red;">*</span>:</label>
+    <input type="text" name="full_name" id="full_name" required maxlength="128" autofocus>
+
+    <label for="email">E-mail<span style="color: red;">*</span>:</label>
+    <input type="email" name="email" id="email" required maxlength="128">
+
+    <label for="password">Пароль<span style="color: red;">*</span>:</label>
+    <input type="password" name="password" id="password" required minlength="6">
+
+    <label for="confirm_password">Повторите пароль<span style="color: red;">*</span>:</label>
+    <input type="password" name="confirm_password" id="confirm_password" required minlength="6">
+
+    <input type="submit" class="btn" value="Зарегистрироваться">
+</form>
+
+<p style="margin-top:20px;">Уже есть аккаунт? <a href="{{ url_for('routes.login') }}">Войти</a></p>
+{% endblock %}

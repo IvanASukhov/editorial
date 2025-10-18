@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Рецензии — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Рецензии на рукопись</h2>
+
+<div class="card" style="max-width: 750px;">
+    <b>Название:</b> {{ manuscript.title }}<br>
+    <b>Автор:</b> {{ manuscript.author.full_name }}<br>
+    <b>Аннотация:</b>
+    <div style="margin-left:10px; color: #444;">{{ manuscript.description|default('—') }}</div>
+    <b>Файл:</b>
+    <a href="{{ url_for('routes.media', filename=manuscript.file_path[6:] if manuscript.file_path.startswith('media/') else manuscript.file_path) }}" target="_blank">Скачать</a>
+</div>
+
+<hr>
+
+<h3>Все рецензии</h3>
+{% if reviews %}
+    <table class="table-striped">
+        <tr>
+            <th>Рецензент</th>
+            <th>Оценка</th>
+            <th>Статус</th>
+            <th>Дата</th>
+            <th>Текст рецензии</th>
+        </tr>
+        {% for r in reviews %}
+        <tr>
+            <td>{{ r.reviewer.full_name }}</td>
+            <td>{{ r.score if r.score else '-' }}</td>
+            <td>
+                <span class="manuscript-status status-{{ r.status }}">{{ r.status|replace('_', ' ')|capitalize }}</span>
+            </td>
+            <td>{{ r.created_at.strftime('%d.%m.%Y') }}</td>
+            <td style="max-width: 340px;">{{ r.text|default('—') }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Рецензий пока нет.</p>
+{% endif %}
+
+<p style="margin-top:30px;">
+    <a href="{{ url_for('routes.manuscript_list') }}" class="btn btn-outline">&larr; К списку рукописей</a>
+</p>
+{% endblock %}

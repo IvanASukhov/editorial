@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Мои рукописи — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2>Мои рукописи</h2>
+
+{% if manuscripts %}
+    <table class="table-striped">
+        <tr>
+            <th>Название</th>
+            <th>Статус</th>
+            <th>Дата подачи</th>
+            <th>Файл</th>
+            <th>Публикация</th>
+        </tr>
+        {% for m in manuscripts %}
+        <tr>
+            <td>{{ m.title }}</td>
+            <td>
+                <span class="manuscript-status status-{{ m.status }}">{{ m.status|replace('_', ' ')|capitalize }}</span>
+            </td>
+            <td>{{ m.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>
+                <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}" target="_blank">Скачать</a>
+            </td>
+            <td>
+                {% if m.publication %}
+                    <a href="{{ url_for('routes.publication_detail', pub_id=m.publication.id) }}">{{ m.publication.title }}</a>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>У вас пока нет поданных рукописей.</p>
+{% endif %}
+
+{% endblock %}

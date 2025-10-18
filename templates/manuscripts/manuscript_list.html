@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Список рукописей — Редакционно-издательский отдел МУИВ{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom:1.2em;">Список рукописей</h2>
+
+{% if manuscripts %}
+    <div style="overflow-x:auto;">
+    <table class="table-striped" style="min-width:950px;">
+        <tr>
+            <th>Название</th>
+            <th>Автор</th>
+            <th>Статус</th>
+            <th>Дата подачи</th>
+            <th>Файл</th>
+            {% if user.role == 'reviewer' %}
+                <th>Рецензия</th>
+            {% endif %}
+            {% if user.role == 'staff' %}
+                <th>Рецензии</th>
+            {% endif %}
+        </tr>
+        {% for m in manuscripts %}
+        <tr>
+            <td style="max-width:300px; white-space:normal;">{{ m.title }}</td>
+            <td style="max-width:200px; white-space:normal;">{{ m.author.full_name }}</td>
+            <td>
+                <span class="manuscript-status status-{{ m.status }}" style="display:inline-block; min-width:110px; text-align:center;">
+                    {{ m.status|replace('_', ' ')|capitalize }}
+                </span>
+            </td>
+            <td>{{ m.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>
+                <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}" target="_blank" class="btn btn-link" style="min-width:75px; display:inline-block;">Скачать</a>
+            </td>
+            {% if user.role == 'reviewer' %}
+                <td>
+                    <a href="{{ url_for('routes.review_form', manuscript_id=m.id) }}" class="btn btn-outline" style="min-width:115px; text-align:center;">Рецензировать</a>
+                </td>
+            {% endif %}
+            {% if user.role == 'staff' %}
+                <td>
+                    <a href="{{ url_for('routes.review_list', manuscript_id=m.id) }}" class="btn btn-outline" style="min-width:130px; text-align:center;">Смотреть рецензии</a>
+                </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+{% else %}
+    <p>Рукописей пока нет.</p>
+{% endif %}
+
+{% endblock %}

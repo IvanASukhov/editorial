@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}404 — Страница не найдена{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px 10px;">
+    <h1 style="font-size: 3.5em; color: #243e5c; margin-bottom: 10px;">404</h1>
+    <h2 style="color: #b22222;">Страница не найдена</h2>
+    <p>
+        Извините, такой страницы не существует или она была перемещена.<br>
+        Попробуйте вернуться на <a href="{{ url_for('routes.index') }}">главную страницу</a>
+        или воспользуйтесь меню для перехода.
+    </p>
+    <p style="margin-top: 32px;">
+        <a href="{{ url_for('routes.index') }}" class="btn">На главную</a>
+    </p>
+</div>
+{% endblock %}

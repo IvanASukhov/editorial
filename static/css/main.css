@@ -1,0 +1,137 @@
+/* main.css — общий стиль для редакционно-издательского сайта */
+
+body {
+    background: #f8fafc;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+
+header, nav, footer {
+    background: #243e5c;
+    color: #fff;
+    padding: 16px 0;
+}
+
+header h1, footer p {
+    margin: 0;
+    padding-left: 24px;
+}
+
+nav {
+    margin-bottom: 24px;
+}
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 24px;
+    display: flex;
+    gap: 18px;
+}
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+nav a:hover {
+    color: #ffd700;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 12px #0001;
+    padding: 32px 24px;
+}
+
+h1, h2, h3, h4 {
+    color: #243e5c;
+    margin-top: 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+input[type="text"], input[type="email"], input[type="password"], textarea, select {
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 1em;
+    background: #f7f7fa;
+    transition: border 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border: 1.5px solid #243e5c;
+    outline: none;
+    background: #fff;
+}
+
+input[type="file"] {
+    border: none;
+    background: none;
+}
+
+button, input[type="submit"], .btn {
+    background: #243e5c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 24px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+button:hover, input[type="submit"]:hover, .btn:hover {
+    background: #1a2c43;
+}
+
+.alert {
+    border-radius: 4px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 1em;
+}
+.alert-success { background: #e7faea; color: #23723a; border-left: 6px solid #36c572; }
+.alert-danger { background: #fae7e7; color: #b22222; border-left: 6px solid #e14c4c; }
+.alert-warning { background: #fffbe6; color: #b29600; border-left: 6px solid #ffe066; }
+.alert-info    { background: #eaf5fa; color: #21566b; border-left: 6px solid #64b5f6; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 22px;
+    background: #fafcff;
+}
+th, td {
+    border: 1px solid #d7e0ea;
+    padding: 10px 7px;
+    text-align: left;
+}
+th {
+    background: #f1f4f9;
+    color: #243e5c;
+}
+
+@media (max-width: 700px) {
+    .container { padding: 8vw 2vw; }
+    nav ul { flex-direction: column; gap: 8px; }
+    table, th, td { font-size: 15px; }
+}
+
+footer {
+    margin-top: 40px;
+    text-align: left;
+    font-size: 0.96em;
+    background: #223050;
+    color: #e2e8f0;
+}
