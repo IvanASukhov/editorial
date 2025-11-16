@@ -10,7 +10,8 @@ from datetime import datetime
 import csv
 import io
 
-from models import db, User, Manuscript, Review, Publication, News, Message
+from models import db, User, Manuscript, Review, Publication, News, Message, ManuscriptHistory
+
 
 routes = Blueprint('routes', __name__)
 
@@ -295,6 +296,31 @@ def manuscript_list():
             (crumbs_title, None)
         ]
     )
+
+@routes.route('/manuscripts/<int:manuscript_id>/publish', methods=['POST'])
+@login_required('staff')
+def publish_manuscript(manuscript_id):
+    user = current_user()
+    manuscript = Manuscript.query.get_or_404(manuscript_id)
+
+    if manuscript.status != 'published':
+        manuscript.status = 'published'
+
+        # пишем в историю действий
+        history = ManuscriptHistory(
+            manuscript_id=manuscript.id,
+            actor_id=user.id,
+            actor_role=user.role,
+            action='published',
+            comment='Рукопись допущена к публикации редактором.'
+        )
+        db.session.add(history)
+        db.session.commit()
+        flash('Рукопись отмечена как опубликованная.', 'success')
+    else:
+        flash('Рукопись уже имеет статус «опубликована».', 'info')
+
+    return redirect(url_for('routes.manuscript_list'))
 
 # --- Добавление/просмотр рецензии (рецензент) ---
 
