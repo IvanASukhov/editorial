@@ -1,8 +1,14 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session, send_from_directory, abort, current_app
+from flask import (
+    Blueprint, render_template, redirect, url_for,
+    request, flash, session, send_from_directory,
+    abort, current_app, make_response
+)
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
+import csv
+import io
 
 from models import db, User, Manuscript, Review, Publication, News, Message
 
@@ -32,34 +38,86 @@ def login_required(role=None):
         return decorated_function
     return wrapper
 
-# --- Главная страница, новости, публикации (публичная часть) ---
+# --- Главная страница, О проекте, новости, публикации (публичная часть) ---
 
 @routes.route('/')
 def index():
     news = News.query.order_by(News.published_at.desc()).all()
     publications = Publication.query.order_by(Publication.pub_date.desc()).all()
-    return render_template('index.html', news=news, publications=publications, user=current_user())
+    return render_template(
+        'index.html',
+        news=news,
+        publications=publications,
+        user=current_user(),
+        breadcrumbs=[("Главная", None)]
+    )
+
+@routes.route('/about')
+def about():
+    return render_template(
+        'about.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("О проекте", None)
+        ]
+    )
 
 @routes.route('/news')
 def news():
     all_news = News.query.order_by(News.published_at.desc()).all()
-    return render_template('news/news.html', news=all_news, user=current_user())
+    return render_template(
+        'news/news.html',
+        news=all_news,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Новости", None)
+        ]
+    )
 
 @routes.route('/news/<int:news_id>')
 def news_detail(news_id):
     item = News.query.get_or_404(news_id)
-    return render_template('news/news_detail.html', item=item, user=current_user())
+    return render_template(
+        'news/news_detail.html',
+        item=item,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Новости", url_for('routes.news')),
+            (item.title or "Новость", None)
+        ]
+    )
 
 @routes.route('/publications')
 def publications():
     pubs = Publication.query.order_by(Publication.pub_date.desc()).all()
-    return render_template('publications/publication_list.html', publications=pubs, user=current_user())
+    return render_template(
+        'publications/publication_list.html',
+        publications=pubs,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Публикации", None)
+        ]
+    )
 
 @routes.route('/publications/<int:pub_id>')
 def publication_detail(pub_id):
     pub = Publication.query.get_or_404(pub_id)
     manuscripts = Manuscript.query.filter_by(publication_id=pub.id, status="published").all()
-    return render_template('publications/publication_detail.html', publication=pub, manuscripts=manuscripts, user=current_user())
+    return render_template(
+        'publications/publication_detail.html',
+        publication=pub,
+        manuscripts=manuscripts,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Публикации", url_for('routes.publications')),
+            (pub.title or "Публикация", None)
+        ]
+    )
 
 # --- Аутентификация ---
 
@@ -72,9 +130,16 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.id
             flash('Вы успешно вошли.', 'success')
-            return redirect(url_for('routes.profile'))
+            return redirect(url_for('routes.lk'))
         flash('Неверные email или пароль.', 'danger')
-    return render_template('auth/login.html')
+    return render_template(
+        'auth/login.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Вход", None)
+        ]
+    )
 
 @routes.route('/logout')
 def logout():
@@ -98,17 +163,60 @@ def register():
         db.session.commit()
         flash('Регистрация успешна. Войдите.', 'success')
         return redirect(url_for('routes.login'))
-    return render_template('auth/register.html')
+    return render_template(
+        'auth/register.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Регистрация", None)
+        ]
+    )
 
 # --- Личный кабинет пользователя ---
+
+@routes.route('/lk')
+@login_required()
+def lk():
+    user = current_user()
+
+    # Базовые выборки под разные роли (потом используем в шаблоне как универсальный ЛК)
+    author_manuscripts = []
+    reviewer_reviews = []
+    staff_manuscripts = []
+    admin_stats = {}
+
+    if user.role == 'author':
+        author_manuscripts = Manuscript.query.filter_by(author_id=user.id).order_by(Manuscript.created_at.desc()).all()
+    elif user.role == 'reviewer':
+        reviewer_reviews = Review.query.filter_by(reviewer_id=user.id).order_by(Review.created_at.desc()).all()
+    elif user.role == 'staff':
+        staff_manuscripts = Manuscript.query.order_by(Manuscript.created_at.desc()).limit(20).all()
+    elif user.role == 'admin':
+        admin_stats = {
+            'users_total': User.query.count(),
+            'manuscripts_total': Manuscript.query.count(),
+            'publications_total': Publication.query.count(),
+            'news_total': News.query.count(),
+        }
+
+    return render_template(
+        'auth/profile.html',  # здесь будет универсальный ЛК
+        user=user,
+        author_manuscripts=author_manuscripts,
+        reviewer_reviews=reviewer_reviews,
+        staff_manuscripts=staff_manuscripts,
+        admin_stats=admin_stats,
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", None)
+        ]
+    )
 
 @routes.route('/profile')
 @login_required()
 def profile():
-    user = current_user()
-    my_manuscripts = Manuscript.query.filter_by(author_id=user.id).order_by(Manuscript.created_at.desc()).all() if user.role == 'author' else []
-    my_reviews = Review.query.filter_by(reviewer_id=user.id).order_by(Review.created_at.desc()).all() if user.role == 'reviewer' else []
-    return render_template('auth/profile.html', user=user, manuscripts=my_manuscripts, reviews=my_reviews)
+    # Старый маршрут профиля оставляем для совместимости — просто редирект в ЛК
+    return redirect(url_for('routes.lk'))
 
 # --- Подача рукописи автором ---
 
@@ -137,14 +245,31 @@ def submit_manuscript():
         db.session.commit()
         flash('Рукопись отправлена на рассмотрение!', 'success')
         return redirect(url_for('routes.manuscript_status'))
-    return render_template('manuscripts/submit_manuscript.html', user=current_user())
+    return render_template(
+        'manuscripts/submit_manuscript.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Подать рукопись", None)
+        ]
+    )
 
 @routes.route('/manuscripts/status')
 @login_required('author')
 def manuscript_status():
     user = current_user()
     manuscripts = Manuscript.query.filter_by(author_id=user.id).order_by(Manuscript.created_at.desc()).all()
-    return render_template('manuscripts/manuscript_status.html', manuscripts=manuscripts, user=user)
+    return render_template(
+        'manuscripts/manuscript_status.html',
+        manuscripts=manuscripts,
+        user=user,
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Мои рукописи", None)
+        ]
+    )
 
 # --- Просмотр всех рукописей (редактор, рецензент) ---
 
@@ -154,11 +279,22 @@ def manuscript_list():
     user = current_user()
     if user.role == 'staff':
         manuscripts = Manuscript.query.order_by(Manuscript.created_at.desc()).all()
+        crumbs_title = "Все рукописи"
     elif user.role == 'reviewer':
         manuscripts = [r.manuscript for r in Review.query.filter_by(reviewer_id=user.id).all()]
+        crumbs_title = "Рецензирование"
     else:
         abort(403)
-    return render_template('manuscripts/manuscript_list.html', manuscripts=manuscripts, user=user)
+    return render_template(
+        'manuscripts/manuscript_list.html',
+        manuscripts=manuscripts,
+        user=user,
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            (crumbs_title, None)
+        ]
+    )
 
 # --- Добавление/просмотр рецензии (рецензент) ---
 
@@ -187,17 +323,39 @@ def review_form(manuscript_id):
         db.session.commit()
         flash('Рецензия сохранена.', 'success')
         return redirect(url_for('routes.manuscript_list'))
-    return render_template('reviews/review_form.html', manuscript=manuscript, review=review, user=user)
+    return render_template(
+        'reviews/review_form.html',
+        manuscript=manuscript,
+        review=review,
+        user=user,
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Рецензирование", url_for('routes.manuscript_list')),
+            ("Рецензия", None)
+        ]
+    )
 
 @routes.route('/reviews/list/<int:manuscript_id>')
 @login_required('staff')
 def review_list(manuscript_id):
     manuscript = Manuscript.query.get_or_404(manuscript_id)
     reviews = Review.query.filter_by(manuscript_id=manuscript.id).all()
-    return render_template('reviews/review_list.html', manuscript=manuscript, reviews=reviews, user=current_user())
+    return render_template(
+        'reviews/review_list.html',
+        manuscript=manuscript,
+        reviews=reviews,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Все рукописи", url_for('routes.manuscript_list')),
+            ("Рецензии по рукописи", None)
+        ]
+    )
 
 # ===========================
-# ====== НОВАЯ АДМИНКА ======
+# ====== АДМИНКА ============
 # ===========================
 
 from sqlalchemy import func
@@ -206,18 +364,28 @@ from sqlalchemy import func
 @routes.route('/admin/dashboard')
 @login_required('admin')
 def admin_dashboard():
-    # Краткая статистика
     stats = {
         'news_total': News.query.count(),
         'publications_total': Publication.query.count(),
         'users_total': User.query.count(),
         'contacts_new': Message.query.filter_by(status='new').count() if hasattr(Message, 'status') else 0,
     }
-    # последние 5
     contacts = Message.query.order_by(Message.sent_at.desc()).limit(5).all()
     news = News.query.order_by(News.published_at.desc()).limit(5).all()
     publications = Publication.query.order_by(Publication.pub_date.desc()).limit(5).all()
-    return render_template('admin/dashboard.html', stats=stats, contacts=contacts, news=news, publications=publications, user=current_user())
+    return render_template(
+        'admin/dashboard.html',
+        stats=stats,
+        contacts=contacts,
+        news=news,
+        publications=publications,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", None)
+        ]
+    )
 
 # --- Новости (список, добавление, редактирование, удаление) ---
 @routes.route('/admin/news', methods=['GET', 'POST'])
@@ -233,7 +401,17 @@ def admin_news():
                 flash('Новость удалена.', 'info')
             return redirect(url_for('routes.admin_news'))
     news_list = News.query.order_by(News.published_at.desc()).all()
-    return render_template('admin/news_list.html', news_list=news_list, user=current_user())
+    return render_template(
+        'admin/news_list.html',
+        news_list=news_list,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Новости", None)
+        ]
+    )
 
 @routes.route('/admin/news/edit', defaults={'news_id': None}, methods=['GET', 'POST'])
 @routes.route('/admin/news/edit/<int:news_id>', methods=['GET', 'POST'])
@@ -257,7 +435,17 @@ def admin_news_edit(news_id):
         db.session.commit()
         flash('Новость сохранена.', 'success')
         return redirect(url_for('routes.admin_news'))
-    return render_template('admin/news_edit.html', news=news, user=current_user())
+    return render_template(
+        'admin/news_edit.html',
+        news=news,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Редактирование новости", None)
+        ]
+    )
 
 # --- Публикации (список, добавление, редактирование, удаление) ---
 @routes.route('/admin/publications', methods=['GET', 'POST'])
@@ -273,7 +461,17 @@ def admin_publications():
                 flash('Публикация удалена.', 'info')
             return redirect(url_for('routes.admin_publications'))
     publications = Publication.query.order_by(Publication.pub_date.desc()).all()
-    return render_template('admin/publications_list.html', publications=publications, user=current_user())
+    return render_template(
+        'admin/publications_list.html',
+        publications=publications,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Публикации", None)
+        ]
+    )
 
 @routes.route('/admin/publications/edit', defaults={'pub_id': None}, methods=['GET', 'POST'])
 @routes.route('/admin/publications/edit/<int:pub_id>', methods=['GET', 'POST'])
@@ -309,7 +507,17 @@ def admin_publications_edit(pub_id):
         db.session.commit()
         flash('Публикация сохранена.', 'success')
         return redirect(url_for('routes.admin_publications'))
-    return render_template('admin/publications_edit.html', publication=publication, user=current_user())
+    return render_template(
+        'admin/publications_edit.html',
+        publication=publication,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Редактирование публикации", None)
+        ]
+    )
 
 # --- Пользователи (список, просмотр, смена роли, блокировка/разблокировка) ---
 @routes.route('/admin/users')
@@ -323,7 +531,17 @@ def admin_users():
     if role:
         users_query = users_query.filter_by(role=role)
     users = users_query.order_by(User.registered_at.desc()).all()
-    return render_template('admin/users_list.html', users=users, user=current_user())
+    return render_template(
+        'admin/users_list.html',
+        users=users,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Пользователи", None)
+        ]
+    )
 
 @routes.route('/admin/users/<int:user_id>', methods=['GET', 'POST'])
 @login_required('admin')
@@ -346,7 +564,17 @@ def admin_user_edit(user_id):
             db.session.commit()
             flash('Пользователь разблокирован.', 'success')
         return redirect(url_for('routes.admin_user_edit', user_id=user.id))
-    return render_template('admin/user_edit.html', user=user, user_viewer=current_user())
+    return render_template(
+        'admin/user_edit.html',
+        user=user,
+        user_viewer=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Карточка пользователя", None)
+        ]
+    )
 
 # --- Обращения (контакты/обратная связь) ---
 @routes.route('/admin/contacts', methods=['GET', 'POST'])
@@ -362,7 +590,17 @@ def admin_contacts():
             flash('Обращение отмечено как обработанное.', 'success')
         return redirect(url_for('routes.admin_contacts'))
     contacts = Message.query.order_by(Message.sent_at.desc()).all()
-    return render_template('admin/contacts_list.html', contacts=contacts, user=current_user())
+    return render_template(
+        'admin/contacts_list.html',
+        contacts=contacts,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Обратная связь", None)
+        ]
+    )
 
 # --- Отчёты и аналитика ---
 @routes.route('/admin/reports')
@@ -382,7 +620,45 @@ def admin_reports():
         'contacts_new': Message.query.filter_by(status='new').count() if hasattr(Message, 'status') else 0,
         'contacts_done': Message.query.filter_by(status='done').count() if hasattr(Message, 'status') else 0,
     }
-    return render_template('admin/reports.html', stats=stats, user=current_user())
+    return render_template(
+        'admin/reports.html',
+        stats=stats,
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Отчёты и аналитика", None)
+        ]
+    )
+
+# --- Выгрузка отчёта в CSV ---
+@routes.route('/admin/reports/export/csv')
+@login_required('admin')
+def admin_reports_export_csv():
+    # Пример: выгружаем сводный отчёт по рукописям
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
+
+    writer.writerow([
+        "ID рукописи",
+        "Название",
+        "Автор",
+        "Статус",
+        "Дата создания"
+    ])
+
+    manuscripts = Manuscript.query.order_by(Manuscript.created_at.desc()).all()
+    for m in manuscripts:
+        author_name = m.author.full_name if hasattr(m, "author") and m.author else "—"
+        created = m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else ""
+        writer.writerow([m.id, m.title, author_name, m.status, created])
+
+    csv_data = output.getvalue().encode('utf-8-sig')  # BOM для корректного открытия в Excel
+    response = make_response(csv_data)
+    response.headers["Content-Disposition"] = "attachment; filename=manuscripts_report.csv"
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    return response
 
 # --- Загрузка файлов (рукописи, рецензии) ---
 
@@ -398,7 +674,6 @@ def media(filename):
 def contact():
     if request.method == 'POST':
         sender = current_user()
-        # поддержка анонимных обращений
         sender_email = request.form.get('email') if not sender else None
         subject = request.form.get('subject')
         body = request.form.get('body')
@@ -416,11 +691,24 @@ def contact():
             flash('Сообщение отправлено.', 'success')
         else:
             flash('Заполните все поля.', 'danger')
-    return render_template('contact.html', user=current_user())
+    return render_template(
+        'contact.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Контакты", None)
+        ]
+    )
 
 # --- Обработка 404 ---
 
 @routes.app_errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html', user=current_user()), 404
-
+    return render_template(
+        '404.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Страница не найдена", None)
+        ]
+    ), 404
