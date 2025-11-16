@@ -700,6 +700,17 @@ def contact():
         ]
     )
 
+@routes.route('/author-rules')
+def author_rules():
+    return render_template(
+        'author_rules.html',
+        user=current_user(),
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Требования к авторам", None)
+        ]
+    )
+
 # --- Обработка 404 ---
 
 @routes.app_errorhandler(404)
