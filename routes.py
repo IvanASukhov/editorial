@@ -109,7 +109,10 @@ def publications():
 @routes.route('/publications/<int:pub_id>')
 def publication_detail(pub_id):
     pub = Publication.query.get_or_404(pub_id)
-    manuscripts = Manuscript.query.filter_by(publication_id=pub.id, status="published").all()
+    manuscripts = Manuscript.query.filter_by(
+        publication_id=pub.id,
+        status="published"
+    ).all()
     return render_template(
         'publications/publication_detail.html',
         publication=pub,
@@ -121,6 +124,7 @@ def publication_detail(pub_id):
             (pub.title or "Публикация", None)
         ]
     )
+
 
 # --- Аутентификация ---
 
@@ -311,9 +315,11 @@ def publish_manuscript(manuscript_id):
 
         # 2. если рукопись ещё не привязана к выпуску — привяжем к последнему по дате
         if manuscript.publication_id is None:
-            last_publication = Publication.query.order_by(Publication.pub_date.desc().nullslast()).first()
+            last_publication = Publication.query.order_by(
+                Publication.pub_date.desc().nullslast()
+            ).first()
             if not last_publication:
-                # на всякий случай — если вдруг публикаций нет вообще
+                # fallback: если нет дат, берём первую по id
                 last_publication = Publication.query.order_by(Publication.id.asc()).first()
 
             if last_publication:
@@ -330,7 +336,7 @@ def publish_manuscript(manuscript_id):
         db.session.add(history)
         db.session.commit()
 
-        flash('Рукопись отмечена как опубликованная и привязана к выпуску.', 'success')
+        flash('Рукопись опубликована и привязана к выпуску.', 'success')
     else:
         flash('Рукопись уже имеет статус «опубликована».', 'info')
 
