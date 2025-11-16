@@ -24,9 +24,19 @@
         <ul>
             {% for m in manuscripts %}
                 <li>
-                    {{ m.title }}
-                    {% if m.author %}
-                        — {{ m.author.full_name }}
+                    <span>
+                        {{ m.title }}
+                        {% if m.author %}
+                            — {{ m.author.full_name }}
+                        {% endif %}
+                    </span>
+                    {% if m.file_path %}
+                        &nbsp;•&nbsp;
+                        <a href="{{ url_for('routes.media',
+                                             filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}"
+                           target="_blank">
+                            Скачать
+                        </a>
                     {% endif %}
                 </li>
             {% endfor %}
