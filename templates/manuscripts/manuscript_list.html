@@ -2,53 +2,98 @@
 {% block title %}Список рукописей — Редакционно-издательский отдел МУИВ{% endblock %}
 
 {% block content %}
-<h2 style="margin-bottom:1.2em;">Список рукописей</h2>
+<h2>
+    {% if user.role == 'staff' %}
+        Список рукописей
+    {% elif user.role == 'reviewer' %}
+        Рукописи для рецензирования
+    {% else %}
+        Рукописи
+    {% endif %}
+</h2>
 
-{% if manuscripts %}
-    <div style="overflow-x:auto;">
-    <table class="table-striped" style="min-width:950px;">
-        <tr>
-            <th>Название</th>
-            <th>Автор</th>
-            <th>Статус</th>
-            <th>Дата подачи</th>
-            <th>Файл</th>
-            {% if user.role == 'reviewer' %}
-                <th>Рецензия</th>
-            {% endif %}
-            {% if user.role == 'staff' %}
-                <th>Рецензии</th>
-            {% endif %}
-        </tr>
-        {% for m in manuscripts %}
-        <tr>
-            <td style="max-width:300px; white-space:normal;">{{ m.title }}</td>
-            <td style="max-width:200px; white-space:normal;">{{ m.author.full_name }}</td>
-            <td>
-                <span class="manuscript-status status-{{ m.status }}" style="display:inline-block; min-width:110px; text-align:center;">
-                    {{ m.status|replace('_', ' ')|capitalize }}
-                </span>
-            </td>
-            <td>{{ m.created_at.strftime('%d.%m.%Y') }}</td>
-            <td>
-                <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}" target="_blank" class="btn btn-link" style="min-width:75px; display:inline-block;">Скачать</a>
-            </td>
-            {% if user.role == 'reviewer' %}
-                <td>
-                    <a href="{{ url_for('routes.review_form', manuscript_id=m.id) }}" class="btn btn-outline" style="min-width:115px; text-align:center;">Рецензировать</a>
-                </td>
-            {% endif %}
-            {% if user.role == 'staff' %}
-                <td>
-                    <a href="{{ url_for('routes.review_list', manuscript_id=m.id) }}" class="btn btn-outline" style="min-width:130px; text-align:center;">Смотреть рецензии</a>
-                </td>
-            {% endif %}
-        </tr>
-        {% endfor %}
-    </table>
-    </div>
-{% else %}
-    <p>Рукописей пока нет.</p>
-{% endif %}
+<div class="card">
+    {% if manuscripts %}
+        <table class="table-striped">
+            <tr>
+                <th>Название</th>
+                {% if user.role == 'staff' %}
+                    <th>Автор</th>
+                {% endif %}
+                <th>Статус</th>
+                <th>Дата подачи</th>
+                <th>Файл</th>
+                <th>
+                    {% if user.role == 'staff' %}
+                        Действия
+                    {% else %}
+                        Рецензии
+                    {% endif %}
+                </th>
+            </tr>
 
+            {% for m in manuscripts %}
+            <tr>
+                <td>{{ m.title }}</td>
+
+                {% if user.role == 'staff' %}
+                    <td>{{ m.author.full_name if m.author else "—" }}</td>
+                {% endif %}
+
+                <td>
+                    <span class="manuscript-status status-{{ m.status }}">
+                        {{ m.status|replace('_', ' ')|capitalize }}
+                    </span>
+                </td>
+
+                <td>
+                    {% if m.created_at %}
+                        {{ m.created_at.strftime('%d.%m.%Y') }}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if m.file_path %}
+                        <a href="{{ url_for('routes.media',
+                                            filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}"
+                           target="_blank">
+                            Скачать
+                        </a>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td style="white-space: nowrap;">
+                    {% if user.role == 'reviewer' %}
+                        <a href="{{ url_for('routes.review_form', manuscript_id=m.id) }}"
+                           class="btn btn-outline">
+                            Рецензировать
+                        </a>
+                    {% elif user.role == 'staff' %}
+                        <a href="{{ url_for('routes.review_list', manuscript_id=m.id) }}"
+                           class="btn btn-outline">
+                            Смотреть рецензии
+                        </a>
+
+                        {% if m.status != 'published' %}
+                            <form action="{{ url_for('routes.publish_manuscript', manuscript_id=m.id) }}"
+                                  method="post"
+                                  style="display:inline;">
+                                <button type="submit" class="btn btn-primary">
+                                    Опубликовать
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="hint">Уже опубликована</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Рукописи не найдены.</p>
+    {% endif %}
+</div>
 {% endblock %}
