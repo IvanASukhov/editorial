@@ -1,51 +1,38 @@
 {% extends "base.html" %}
-{% block title %}{{ publication.title }} — Публикации — Редакционно-издательский отдел МУИВ{% endblock %}
+{% block title %}{{ publication.title }} — Публикация{% endblock %}
 
 {% block content %}
 <h2>{{ publication.title }}</h2>
-<p style="color: #888;">
-    {% if publication.type == 'journal' %}
-        Журнал
-    {% elif publication.type == 'book' %}
-        Книга/Сборник
-    {% else %}
-        Издание
+
+<p class="hint">
+    {% if publication.type %}
+        {{ publication.type|capitalize }}
     {% endif %}
     {% if publication.pub_date %}
         — {{ publication.pub_date.strftime('%d.%m.%Y') }}
     {% endif %}
 </p>
+
 {% if publication.description %}
-    <div class="card" style="max-width: 700px;">
-        {{ publication.description }}
-    </div>
+    <p>{{ publication.description }}</p>
 {% endif %}
 
-<hr>
+<h3>Опубликованные материалы</h3>
 
-<h3>Материалы публикации</h3>
-{% if manuscripts %}
-    <table class="table-striped">
-        <tr>
-            <th>Название статьи</th>
-            <th>Автор</th>
-            <th>Файл</th>
-        </tr>
-        {% for m in manuscripts %}
-        <tr>
-            <td>{{ m.title }}</td>
-            <td>{{ m.author.full_name }}</td>
-            <td>
-                <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}" target="_blank">Скачать</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-{% else %}
-    <p>В данном выпуске пока нет опубликованных материалов.</p>
-{% endif %}
-
-<p style="margin-top:30px;">
-    <a href="{{ url_for('routes.publications') }}" class="btn btn-outline">&larr; Все публикации</a>
-</p>
+<div class="card">
+    {% if manuscripts %}
+        <ul>
+            {% for m in manuscripts %}
+                <li>
+                    {{ m.title }}
+                    {% if m.author %}
+                        — {{ m.author.full_name }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>В этом выпуске пока нет опубликованных материалов.</p>
+    {% endif %}
+</div>
 {% endblock %}
