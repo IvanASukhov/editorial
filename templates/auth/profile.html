@@ -1,22 +1,42 @@
 {% extends "base.html" %}
-{% block title %}Профиль — Редакционно-издательский отдел МУИВ{% endblock %}
+{% block title %}Личный кабинет — Редакционно-издательский отдел МУИВ{% endblock %}
 
 {% block content %}
 <h2>Личный кабинет</h2>
 
-<div class="card" style="max-width: 520px;">
-    <b>ФИО:</b> {{ user.full_name }}<br>
-    <b>E-mail:</b> {{ user.email }}<br>
-    <b>Роль:</b>
-    {% if user.role == 'author' %}Автор{% elif user.role == 'staff' %}Редактор{% elif user.role == 'reviewer' %}Рецензент{% elif user.role == 'admin' %}Администратор{% endif %}
-    <br>
-    <b>Дата регистрации:</b> {{ user.registered_at.strftime('%d.%m.%Y') if user.registered_at else '' }}
+<div class="card" style="max-width: 520px; margin-bottom: 20px;">
+    <p><b>ФИО:</b> {{ user.full_name }}</p>
+    <p><b>E-mail:</b> {{ user.email }}</p>
+    <p><b>Роль:</b>
+        {% if user.role == 'author' %}
+            Автор
+        {% elif user.role == 'staff' %}
+            Редактор
+        {% elif user.role == 'reviewer' %}
+            Рецензент
+        {% elif user.role == 'admin' %}
+            Администратор
+        {% else %}
+            {{ user.role }}
+        {% endif %}
+    </p>
+    <p><b>Дата регистрации:</b> {{ user.registered_at.strftime('%d.%m.%Y') if user.registered_at else '' }}</p>
 </div>
 
+{# === Автор: загрузка работ, статусы и комментарии === #}
 {% if user.role == 'author' %}
+    <h3>Навигация автора</h3>
+    <div class="lk-actions-grid">
+        <a class="btn btn-primary" href="{{ url_for('routes.submit_manuscript') }}">Подать рукопись</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.manuscript_status') }}">Мои рукописи</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.contact') }}">Задать вопрос редакции</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.publications') }}">Опубликованные материалы</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.news') }}">Новости редакции</a>
+    </div>
+
     <hr>
-    <h3>Мои рукописи</h3>
-    {% if manuscripts %}
+    <h3>Мои рукописи и их статус</h3>
+    {% if author_manuscripts %}
         <table class="table-striped">
             <tr>
                 <th>Название</th>
@@ -24,28 +44,46 @@
                 <th>Дата подачи</th>
                 <th>Файл</th>
             </tr>
-            {% for m in manuscripts %}
+            {% for m in author_manuscripts %}
             <tr>
                 <td>{{ m.title }}</td>
                 <td>
-                    <span class="manuscript-status status-{{ m.status }}">{{ m.status|replace('_', ' ')|capitalize }}</span>
+                    <span class="manuscript-status status-{{ m.status }}">
+                        {{ m.status|replace('_', ' ')|capitalize }}
+                    </span>
                 </td>
-                <td>{{ m.created_at.strftime('%d.%m.%Y') }}</td>
+                <td>{{ m.created_at.strftime('%d.%m.%Y') if m.created_at else '' }}</td>
                 <td>
-                    <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}" target="_blank">Скачать</a>
+                    <a href="{{ url_for('routes.media', filename=m.file_path[6:] if m.file_path.startswith('media/') else m.file_path) }}"
+                       target="_blank">Скачать</a>
                 </td>
             </tr>
             {% endfor %}
         </table>
+        <p class="hint">
+            Детальные комментарии редактора и рецензента по каждой рукописи отображаются на странице
+            <a href="{{ url_for('routes.manuscript_status') }}">«Мои рукописи»</a>.
+        </p>
     {% else %}
-        <p>У вас пока нет поданных рукописей.</p>
+        <p>У вас пока нет поданных рукописей. Вы можете <a href="{{ url_for('routes.submit_manuscript') }}">отправить первую рукопись</a>.</p>
     {% endif %}
 {% endif %}
 
+
+{# === Рецензент: очередь на рецензирование, список рецензий === #}
 {% if user.role == 'reviewer' %}
+    <h3>Навигация рецензента</h3>
+    <div class="lk-actions-grid">
+        <a class="btn btn-primary" href="{{ url_for('routes.manuscript_list') }}">Очередь на рецензирование</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.contact') }}">Связаться с редакцией</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.news') }}">Новости редакции</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.publications') }}">Публикации</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.index') }}">Главная страница</a>
+    </div>
+
     <hr>
-    <h3>Назначенные рецензии</h3>
-    {% if reviews %}
+    <h3>Мои рецензии</h3>
+    {% if reviewer_reviews %}
         <table class="table-striped">
             <tr>
                 <th>Рукопись</th>
@@ -54,32 +92,108 @@
                 <th>Дата</th>
                 <th>Действие</th>
             </tr>
-            {% for r in reviews %}
+            {% for r in reviewer_reviews %}
             <tr>
                 <td>{{ r.manuscript.title }}</td>
                 <td>{% if r.score %}{{ r.score }}{% else %}-{% endif %}</td>
-                <td><span class="manuscript-status status-{{ r.status }}">{{ r.status|replace('_', ' ')|capitalize }}</span></td>
-                <td>{{ r.created_at.strftime('%d.%m.%Y') }}</td>
                 <td>
-                    <a href="{{ url_for('routes.review_form', manuscript_id=r.manuscript_id) }}" class="btn btn-outline">Редактировать</a>
+                    <span class="manuscript-status status-{{ r.status }}">
+                        {{ r.status|replace('_', ' ')|capitalize }}
+                    </span>
+                </td>
+                <td>{{ r.created_at.strftime('%d.%m.%Y') if r.created_at else '' }}</td>
+                <td>
+                    <a href="{{ url_for('routes.review_form', manuscript_id=r.manuscript_id) }}" class="btn btn-outline">
+                        Открыть / редактировать
+                    </a>
                 </td>
             </tr>
             {% endfor %}
         </table>
     {% else %}
-        <p>Пока нет назначенных рецензий.</p>
+        <p>Пока нет назначенных рецензий. Перейдите к
+            <a href="{{ url_for('routes.manuscript_list') }}">очереди на рецензирование</a>, когда появятся новые материалы.</p>
     {% endif %}
 {% endif %}
 
+
+{# === Редактор (staff): работа с рукописями === #}
 {% if user.role == 'staff' %}
+    <h3>Навигация редактора</h3>
+    <div class="lk-actions-grid">
+        <a class="btn btn-primary" href="{{ url_for('routes.manuscript_list') }}">Все рукописи</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.contact') }}">Обращения авторов</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.publications') }}">Публикации</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.news') }}">Новости редакции</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.index') }}">Главная страница</a>
+    </div>
+
     <hr>
-    <p>Вы — сотрудник редакции. Перейдите к <a href="{{ url_for('routes.manuscript_list') }}">списку рукописей</a> для работы с материалами.</p>
+    <h3>Последние рукописи в работе</h3>
+    {% if staff_manuscripts %}
+        <table class="table-striped">
+            <tr>
+                <th>Название</th>
+                <th>Автор</th>
+                <th>Статус</th>
+                <th>Дата подачи</th>
+            </tr>
+            {% for m in staff_manuscripts %}
+            <tr>
+                <td>{{ m.title }}</td>
+                <td>{{ m.author.full_name if m.author else "-" }}</td>
+                <td>
+                    <span class="manuscript-status status-{{ m.status }}">
+                        {{ m.status|replace('_', ' ')|capitalize }}
+                    </span>
+                </td>
+                <td>{{ m.created_at.strftime('%d.%m.%Y') if m.created_at else '' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p class="hint">
+            Полный список и детализация рецензий доступны на странице
+            <a href="{{ url_for('routes.manuscript_list') }}">«Все рукописи»</a>.
+        </p>
+    {% else %}
+        <p>Рукописи для обработки пока не найдены.</p>
+    {% endif %}
 {% endif %}
 
-{# Для администратора убираем ненужный блок или оставляем текст #}
+
+{# === Администратор: управление системой === #}
 {% if user.role == 'admin' %}
+    <h3>Навигация администратора</h3>
+    <div class="lk-actions-grid">
+        <a class="btn btn-primary" href="{{ url_for('routes.admin_dashboard') }}">Админ-панель</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.admin_users') }}">Пользователи</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.admin_news') }}">Новости</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.admin_publications') }}">Публикации</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.admin_contacts') }}">Обратная связь</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.admin_reports') }}">Отчёты и аналитика</a>
+        <a class="btn btn-outline" href="{{ url_for('routes.admin_reports_export_csv') }}">Выгрузка отчёта (CSV)</a>
+    </div>
+
     <hr>
-    <p>Вы — администратор. Для работы используйте раздел <b>“Админка”</b> в верхнем меню.</p>
+    <h3>Краткая статистика системы</h3>
+    <table class="table-striped" style="max-width: 520px;">
+        <tr>
+            <th>Всего пользователей</th>
+            <td>{{ admin_stats.users_total if admin_stats.users_total is defined else '' }}</td>
+        </tr>
+        <tr>
+            <th>Всего рукописей</th>
+            <td>{{ admin_stats.manuscripts_total if admin_stats.manuscripts_total is defined else '' }}</td>
+        </tr>
+        <tr>
+            <th>Всего публикаций</th>
+            <td>{{ admin_stats.publications_total if admin_stats.publications_total is defined else '' }}</td>
+        </tr>
+        <tr>
+            <th>Всего новостей</th>
+            <td>{{ admin_stats.news_total if admin_stats.news_total is defined else '' }}</td>
+        </tr>
+    </table>
 {% endif %}
 
 {% endblock %}
