@@ -13,6 +13,8 @@ import io
 from models import db, User, Manuscript, Review, Publication, News, Message, ManuscriptHistory
 
 
+
+
 routes = Blueprint('routes', __name__)
 
 # --- Вспомогательные функции ---
@@ -304,9 +306,20 @@ def publish_manuscript(manuscript_id):
     manuscript = Manuscript.query.get_or_404(manuscript_id)
 
     if manuscript.status != 'published':
+        # 1. меняем статус
         manuscript.status = 'published'
 
-        # пишем в историю действий
+        # 2. если рукопись ещё не привязана к выпуску — привяжем к последнему по дате
+        if manuscript.publication_id is None:
+            last_publication = Publication.query.order_by(Publication.pub_date.desc().nullslast()).first()
+            if not last_publication:
+                # на всякий случай — если вдруг публикаций нет вообще
+                last_publication = Publication.query.order_by(Publication.id.asc()).first()
+
+            if last_publication:
+                manuscript.publication_id = last_publication.id
+
+        # 3. пишем запись в историю
         history = ManuscriptHistory(
             manuscript_id=manuscript.id,
             actor_id=user.id,
@@ -316,11 +329,13 @@ def publish_manuscript(manuscript_id):
         )
         db.session.add(history)
         db.session.commit()
-        flash('Рукопись отмечена как опубликованная.', 'success')
+
+        flash('Рукопись отмечена как опубликованная и привязана к выпуску.', 'success')
     else:
         flash('Рукопись уже имеет статус «опубликована».', 'info')
 
     return redirect(url_for('routes.manuscript_list'))
+
 
 # --- Добавление/просмотр рецензии (рецензент) ---
 
