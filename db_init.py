@@ -1,7 +1,8 @@
-from models import db, User, Manuscript, Review, Publication, News, Message
+from models import db, User, Manuscript, Review, Publication, News, Message, ManuscriptHistory
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date
 import os
+
 
 def init_db(app=None):
     """
@@ -21,6 +22,7 @@ def init_db(app=None):
         db.init_app(app)
         with app.app_context():
             _init_and_fill()
+
 
 def _init_and_fill():
     # Создать таблицы
@@ -89,6 +91,9 @@ def _init_and_fill():
     db.session.add_all([news1, news2])
     db.session.commit()
 
+    # убедимся, что каталог для рукописей существует
+    os.makedirs("media/manuscripts", exist_ok=True)
+
     # === Рукописи ===
     m1 = Manuscript(
         title="Инновационные методы преподавания",
@@ -120,25 +125,61 @@ def _init_and_fill():
     db.session.add(r1)
     db.session.commit()
 
-    # === Сообщения ===
+    # === История рукописей (комментарии / статусы) ===
+    h1 = ManuscriptHistory(
+        manuscript_id=m1.id,
+        actor_id=author.id,
+        actor_role="author",
+        action="submitted",
+        comment="Автор отправил рукопись в редакцию."
+    )
+    h2 = ManuscriptHistory(
+        manuscript_id=m2.id,
+        actor_id=author.id,
+        actor_role="author",
+        action="submitted",
+        comment="Автор загрузил рукопись для рассмотрения."
+    )
+    h3 = ManuscriptHistory(
+        manuscript_id=m2.id,
+        actor_id=reviewer.id,
+        actor_role="reviewer",
+        action="review_submitted",
+        comment="Рецензент оставил замечания и рекомендацию доработать текст."
+    )
+    db.session.add_all([h1, h2, h3])
+    db.session.commit()
+
+    # === Сообщения (обратная связь) ===
     msg1 = Message(
         sender_id=author.id,
-        receiver_id=staff.id,
+        sender_email=None,
         subject="Вопрос по срокам публикации",
         body="Когда будет опубликована моя рукопись?",
-        sent_at=datetime.now()
+        sent_at=datetime.now(),
+        status="new"
     )
     msg2 = Message(
         sender_id=staff.id,
-        receiver_id=author.id,
+        sender_email=None,
         subject="Ответ на ваш вопрос",
         body="Ориентировочная дата публикации — июнь 2024 года.",
-        sent_at=datetime.now()
+        sent_at=datetime.now(),
+        status="done"
     )
-    db.session.add_all([msg1, msg2])
+    msg3 = Message(
+        sender_id=None,
+        sender_email="external_author@example.com",
+        subject="Запрос информации",
+        body="Хотел бы уточнить требования к оформлению рукописи.",
+        sent_at=datetime.now(),
+        status="new"
+    )
+    db.session.add_all([msg1, msg2, msg3])
     db.session.commit()
 
     print("Database created and filled with demo data.")
+
 
 # Точка входа для ручного запуска (опционально)
 if __name__ == "__main__":
