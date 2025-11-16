@@ -124,3 +124,39 @@ class ManuscriptHistory(db.Model):
     comment = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Department(db.Model):
+    """
+    Справочник подразделений / кафедр университета.
+    Задел на развитие системы: в дальнейшем пользователи
+    могут быть привязаны к конкретному отделу или кафедре.
+    """
+    __tablename__ = 'departments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+
+class JournalSection(db.Model):
+    """
+    Справочник разделов журнала / тематических рубрик.
+    Может использоваться для группировки рукописей и публикаций
+    по научным направлениям.
+    """
+    __tablename__ = 'journal_sections'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+
+class Keyword(db.Model):
+    """
+    Справочник ключевых слов.
+    Задел на реализацию ключевых слов для рукописей и поиска по ним.
+    """
+    __tablename__ = 'keywords'
+
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String(64), nullable=False, unique=True)
