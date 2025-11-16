@@ -4,30 +4,55 @@
 {% block content %}
 <h2>Публикации</h2>
 
-{% if publications %}
-    <ul>
-    {% for pub in publications %}
-        <li style="margin-bottom: 18px;">
-            <a href="{{ url_for('routes.publication_detail', pub_id=pub.id) }}">
-                <b>{{ pub.title }}</b>
-            </a>
-            <span style="color: #888; font-size: 0.97em;">
-                {% if pub.type == 'journal' %}
-                    (Журнал)
-                {% elif pub.type == 'book' %}
-                    (Книга/Сборник)
-                {% else %}
-                    (Издание)
-                {% endif %}
-                {% if pub.pub_date %} — {{ pub.pub_date.strftime('%d.%m.%Y') }}{% endif %}
-            </span>
-            <br>
-            <span>{{ pub.description[:180] }}{% if pub.description and pub.description|length > 180 %}...{% endif %}</span>
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>Пока нет публикаций.</p>
-{% endif %}
+<div class="card">
+    {% if publications %}
+        <ul>
+            {% for pub in publications %}
 
+                {# список опубликованных материалов в этом выпуске #}
+                {% set published_manuscripts = pub.manuscripts
+                     | selectattr('status', 'equalto', 'published')
+                     | list %}
+
+                <li style="margin-bottom: 18px;">
+                    <p style="margin: 0 0 4px 0;">
+                        <a href="{{ url_for('routes.publication_detail', pub_id=pub.id) }}">
+                            {{ pub.title }}
+                        </a>
+                        {% if pub.type %} ({{ pub.type|capitalize }}){% endif %}
+                        {% if pub.pub_date %} — {{ pub.pub_date.strftime('%d.%m.%Y') }}{% endif %}
+                    </p>
+
+                    {% if pub.description %}
+                        <p class="hint" style="margin: 0 0 4px 0;">
+                            {{ pub.description }}
+                        </p>
+                    {% endif %}
+
+                    {% if published_manuscripts %}
+                        <p class="hint" style="margin: 4px 0 4px 0;">
+                            Опубликованные материалы ({{ published_manuscripts|length }}):
+                        </p>
+                        <ul style="margin: 0 0 0 16px;">
+                            {% for m in published_manuscripts %}
+                                <li>
+                                    {{ m.title }}
+                                    {% if m.author %}
+                                        — {{ m.author.full_name }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="hint" style="margin: 4px 0 0 0;">
+                            В этом выпуске пока нет опубликованных материалов.
+                        </p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Публикации пока не добавлены.</p>
+    {% endif %}
+</div>
 {% endblock %}
