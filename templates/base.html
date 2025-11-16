@@ -18,6 +18,8 @@
             <li><a href="{{ url_for('routes.news') }}">Новости</a></li>
             <li><a href="{{ url_for('routes.publications') }}">Публикации</a></li>
             <li><a href="{{ url_for('routes.about') }}">О проекте</a></li>
+            <li><a href="{{ url_for('routes.author_rules') }}">Требования к авторам</a></li>
+
 
             {% if user %}
                 {% if user.role == 'author' %}
