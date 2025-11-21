@@ -4,6 +4,12 @@
 {% block content %}
 <h2>Пользователи</h2>
 
+<div style="margin-bottom: 15px;">
+    <a href="{{ url_for('routes.admin_user_create') }}" class="btn">
+        Добавить пользователя
+    </a>
+</div>
+
 <form method="get" action="{{ url_for('routes.admin_users') }}" style="margin-bottom: 20px;">
     <input type="text" name="q" value="{{ request.args.q or '' }}" placeholder="Поиск по ФИО или email" style="width: 240px;">
     <select name="role" style="margin-left: 10px;">
