@@ -567,17 +567,25 @@ def admin_publications_edit(pub_id):
     )
 
 # --- Пользователи (список, просмотр, смена роли, блокировка/разблокировка) ---
+# --- Пользователи (список, просмотр, создание, смена роли, блокировка/разблокировка, удаление) ---
+
 @routes.route('/admin/users')
 @login_required('admin')
 def admin_users():
     q = request.args.get('q', '').strip()
     role = request.args.get('role', '').strip()
+
     users_query = User.query
     if q:
-        users_query = users_query.filter((User.full_name.ilike(f'%{q}%')) | (User.email.ilike(f'%{q}%')))
+        users_query = users_query.filter(
+            (User.full_name.ilike(f'%{q}%')) |
+            (User.email.ilike(f'%{q}%'))
+        )
     if role:
         users_query = users_query.filter_by(role=role)
+
     users = users_query.order_by(User.registered_at.desc()).all()
+
     return render_template(
         'admin/users_list.html',
         users=users,
@@ -590,31 +598,73 @@ def admin_users():
         ]
     )
 
+
 @routes.route('/admin/users/<int:user_id>', methods=['GET', 'POST'])
 @login_required('admin')
 def admin_user_edit(user_id):
+    viewer = current_user()
     user = User.query.get_or_404(user_id)
+
     if request.method == 'POST':
         action = request.form.get('action')
+
+        # смена роли
         if action == 'change_role':
             new_role = request.form.get('role')
-            if new_role and new_role != user.role:
-                user.role = new_role
-                db.session.commit()
-                flash('Роль пользователя обновлена.', 'success')
+            if new_role and new_role in ['author', 'staff', 'reviewer', 'admin']:
+                if new_role != user.role:
+                    user.role = new_role
+                    db.session.commit()
+                    flash('Роль пользователя обновлена.', 'success')
+            else:
+                flash('Некорректное значение роли.', 'error')
+
+        # блокировка / разблокировка
         elif action == 'block':
             user.is_blocked = True
             db.session.commit()
             flash('Пользователь заблокирован.', 'info')
+
         elif action == 'unblock':
             user.is_blocked = False
             db.session.commit()
             flash('Пользователь разблокирован.', 'success')
+
+        # удаление пользователя
+        elif action == 'delete':
+            # запрет удалять самого себя
+            if viewer and viewer.id == user.id:
+                flash('Нельзя удалить собственную учётную запись администратора.', 'warning')
+                return redirect(url_for('routes.admin_user_edit', user_id=user.id))
+
+            # проверка на связанные данные
+            has_links = (
+                (user.manuscripts and len(user.manuscripts) > 0) or
+                (user.reviews_made and len(user.reviews_made) > 0) or
+                (user.messages_sent and len(user.messages_sent) > 0) or
+                (user.history_entries and len(user.history_entries) > 0)
+            )
+
+            if has_links:
+                flash(
+                    'Невозможно удалить пользователя, так как с ним связаны '
+                    'рукописи, рецензии, сообщения или записи истории. '
+                    'Рекомендуется заблокировать учётную запись.',
+                    'warning'
+                )
+                return redirect(url_for('routes.admin_user_edit', user_id=user.id))
+
+            db.session.delete(user)
+            db.session.commit()
+            flash('Пользователь успешно удалён.', 'success')
+            return redirect(url_for('routes.admin_users'))
+
         return redirect(url_for('routes.admin_user_edit', user_id=user.id))
+
     return render_template(
         'admin/user_edit.html',
         user=user,
-        user_viewer=current_user(),
+        user_viewer=viewer,
         breadcrumbs=[
             ("Главная", url_for('routes.index')),
             ("Личный кабинет", url_for('routes.lk')),
@@ -622,6 +672,70 @@ def admin_user_edit(user_id):
             ("Карточка пользователя", None)
         ]
     )
+
+
+@routes.route('/admin/users/create', methods=['GET', 'POST'])
+@login_required('admin')
+def admin_user_create():
+    viewer = current_user()
+
+    if request.method == 'POST':
+        full_name = (request.form.get('full_name') or '').strip()
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
+        role = request.form.get('role') or 'author'
+
+        errors = []
+
+        if not full_name:
+            errors.append('Не указано ФИО пользователя.')
+        if not email:
+            errors.append('Не указан email.')
+        if not password:
+            errors.append('Не задан пароль.')
+        if User.query.filter_by(email=email).first():
+            errors.append('Пользователь с таким email уже существует.')
+        if len(password) < 4:
+            errors.append('Пароль должен быть не короче 4 символов.')
+
+        if errors:
+            for e in errors:
+                flash(e, 'error')
+            return render_template(
+                'admin/user_create.html',
+                user_viewer=viewer,
+                breadcrumbs=[
+                    ("Главная", url_for('routes.index')),
+                    ("Личный кабинет", url_for('routes.lk')),
+                    ("Админ-панель", url_for('routes.admin_dashboard')),
+                    ("Создание пользователя", None)
+                ]
+            )
+
+        from werkzeug.security import generate_password_hash
+        new_user = User(
+            full_name=full_name,
+            email=email,
+            password_hash=generate_password_hash(password),
+            role=role
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Пользователь успешно создан.', 'success')
+        return redirect(url_for('routes.admin_user_edit', user_id=new_user.id))
+
+    return render_template(
+        'admin/user_create.html',
+        user_viewer=viewer,
+        breadcrumbs=[
+            ("Главная", url_for('routes.index')),
+            ("Личный кабинет", url_for('routes.lk')),
+            ("Админ-панель", url_for('routes.admin_dashboard')),
+            ("Создание пользователя", None)
+        ]
+    )
+
 
 # --- Обращения (контакты/обратная связь) ---
 @routes.route('/admin/contacts', methods=['GET', 'POST'])
