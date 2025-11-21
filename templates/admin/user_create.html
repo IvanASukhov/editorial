@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Добавление пользователя — Админка{% endblock %}
+
+{% block content %}
+<h2>Добавление нового пользователя</h2>
+
+<div class="card" style="max-width: 520px; padding: 15px 20px;">
+    <form method="post">
+        <div style="margin-bottom: 10px;">
+            <label for="full_name"><b>ФИО пользователя</b></label><br>
+            <input type="text"
+                   id="full_name"
+                   name="full_name"
+                   style="width: 100%;"
+                   placeholder="Введите фамилию, имя, отчество"
+                   value="{{ request.form.full_name or '' }}">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label for="email"><b>Email</b></label><br>
+            <input type="email"
+                   id="email"
+                   name="email"
+                   style="width: 100%;"
+                   placeholder="user@example.com"
+                   value="{{ request.form.email or '' }}">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label for="password"><b>Пароль</b></label><br>
+            <input type="password"
+                   id="password"
+                   name="password"
+                   style="width: 100%;"
+                   placeholder="Минимум 4 символа">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label for="role"><b>Роль пользователя</b></label><br>
+            <select id="role" name="role" style="width: 100%; max-width: 260px;">
+                <option value="author"
+                        {% if (request.form.role or '') == 'author' %}selected{% endif %}>
+                    Автор
+                </option>
+                <option value="staff"
+                        {% if (request.form.role or '') == 'staff' %}selected{% endif %}>
+                    Редактор
+                </option>
+                <option value="reviewer"
+                        {% if (request.form.role or '') == 'reviewer' %}selected{% endif %}>
+                    Рецензент
+                </option>
+                <option value="admin"
+                        {% if (request.form.role or '') == 'admin' %}selected{% endif %}>
+                    Администратор
+                </option>
+            </select>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <button type="submit" class="btn">Создать пользователя</button>
+            <a href="{{ url_for('routes.admin_users') }}" class="btn btn-outline" style="margin-left: 10px;">
+                Отмена
+            </a>
+        </div>
+    </form>
+</div>
+
+<p style="margin-top: 20px;">
+    <a href="{{ url_for('routes.admin_users') }}">&larr; К списку пользователей</a>
+</p>
+{% endblock %}
